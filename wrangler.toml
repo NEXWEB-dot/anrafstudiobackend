@@ -1,0 +1,29 @@
+name = "anraf-studio"
+pages_build_output_dir = "public"
+compatibility_date = "2026-01-01"
+
+[[r2_buckets]]
+binding = "PUBLIC"
+bucket_name = "store-public"
+
+[[r2_buckets]]
+binding = "PRIVATE"
+bucket_name = "store-private"
+
+# ── Secrets (set in Cloudflare Pages dashboard → Settings → Environment variables) ──
+# SUPABASE_URL              https://your-project.supabase.co
+# SUPABASE_SERVICE_KEY      service_role JWT or sb_secret_… key (server only, never in browser)
+# SITE_ORIGIN               https://anrafstudio.com  (exact, used for Origin checks)
+# PUBLIC_CDN_ORIGIN         https://cdn.anrafstudio.com
+# ACCESS_TEAM_DOMAIN        your-team.cloudflareaccess.com
+# ACCESS_AUD                Access application AUD tag
+# ADMIN_EMAILS              comma-separated: admin@anrafstudio.com,you@example.com
+# TURNSTILE_SECRET          Cloudflare Turnstile secret key
+# RESEND_API_KEY            Resend API key
+# MAIL_FROM                 noreply@anrafstudio.com (verified sending domain)
+# ADMIN_NOTIFY_EMAIL        admin@anrafstudio.com  (new order notifications)
+# ALERT_EMAIL               ops@anrafstudio.com    (system alerts)
+# WHATSAPP_URL              https://wa.me/923000000000
+# DEPLOY_HOOK_URL           Pages deploy hook URL (for nightly fallback refresh)
+# CF_API_TOKEN              (optional) Cloudflare API token for cache purge
+# CF_ZONE_ID                (optional) Cloudflare zone ID for cache purge

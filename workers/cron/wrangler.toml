@@ -1,0 +1,24 @@
+name = "anraf-store-cron"
+main = "index.js"
+compatibility_date = "2026-01-01"
+
+[triggers]
+crons = ["*/5 * * * *", "0 */6 * * *", "0 3 * * *"]
+
+[[r2_buckets]]
+binding = "PUBLIC"
+bucket_name = "store-public"
+
+[[r2_buckets]]
+binding = "PRIVATE"
+bucket_name = "store-private"
+
+# ── Secrets (set via: wrangler secret put SECRET_NAME --name anraf-store-cron) ──
+# SUPABASE_URL
+# SUPABASE_SERVICE_KEY
+# PUBLIC_CDN_ORIGIN
+# RESEND_API_KEY
+# MAIL_FROM
+# ALERT_EMAIL
+# ADMIN_NOTIFY_EMAIL
+# DEPLOY_HOOK_URL           Pages deploy hook for nightly fallback refresh
