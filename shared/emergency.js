@@ -148,6 +148,7 @@ export async function replayPending(env) {
           qty: i.qty,
           name: i.name,
           price: i.price,
+          size: i.size ?? 'Small',
         })),
         p_force: true,
       });
@@ -164,6 +165,10 @@ export async function replayPending(env) {
   }
 
   // Rebuild R2 from the source of truth now that everything is replayed
+  const remaining = await env.PRIVATE.get('state/pending-ops.json');
+  const pendingOrders = await env.PRIVATE.list({ prefix: 'orders-pending/', limit: 1 });
+  if ((remaining && (await remaining.json()).ops?.length) || pendingOrders.objects.length)
+    return { stopped: true };
   await syncCatalog(env, { allowShrink: true });
   await clearBreaker(env);
   return { replayed: ops.length };

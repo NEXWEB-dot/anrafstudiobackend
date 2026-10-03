@@ -1,3 +1,4 @@
+import { readJSON } from '../../../shared/request.js';
 // functions/api/admin/products.js — GET (list) and POST (create)
 import { saveProduct, ValidationError } from './_product-ops.js';
 
@@ -20,7 +21,7 @@ export async function onRequestGet({ env }) {
 /** POST /api/admin/products — create a new product */
 export async function onRequestPost({ request, env, data }) {
   let body;
-  try { body = await request.json(); } catch { return json({ error: 'bad_json' }, 400); }
+  try { body = await readJSON(request); } catch (e) { return json({ error: e.message }, e.status || 400); }
 
   try {
     body.id = crypto.randomUUID(); // server assigns the ID

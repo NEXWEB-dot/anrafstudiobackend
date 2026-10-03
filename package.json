@@ -4,16 +4,16 @@
   "description": "ANRAF Studio e-commerce store — Cloudflare Pages + Supabase",
   "type": "module",
   "scripts": {
-    "build": "node scripts/fetch-fallback.mjs",
+    "build": "node scripts/build.mjs",
     "dev": "npx wrangler pages dev public --compatibility-date=2026-01-01"
   },
   "dependencies": {
     "jose": "5.9.6"
   },
   "devDependencies": {
-    "wrangler": "^3.95.0"
+    "wrangler": "4.147.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   }
 }

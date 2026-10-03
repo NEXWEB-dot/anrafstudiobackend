@@ -1,5 +1,6 @@
+import { readJSON } from '../../../../shared/request.js';
 // functions/api/admin/orders/[id].js — PATCH order status
-import { rpc, BackendError, isAvailabilityError } from '../../../../shared/sb.js';
+import { sb, rpc, BackendError, isAvailabilityError } from '../../../../shared/sb.js';
 import { getMode } from '../../../../shared/mode.js';
 
 const json = (o, s = 200) =>
@@ -10,6 +11,20 @@ const json = (o, s = 200) =>
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const VALID_STATUSES = new Set(['pending', 'confirmed', 'shipped', 'delivered', 'cancelled']);
+
+export async function onRequestGet({ env, params }) {
+  const id = params.id;
+  if (!UUID.test(id)) return json({ error: 'invalid_id' }, 400);
+  const pending = await env.PRIVATE.get(`orders-pending/${id}.json`);
+  if (pending) return json({ ...await pending.json(), _source: 'offline' });
+  try {
+    const response = await sb(env, `orders?select=*,order_items(*)&or=(id.eq.${id},client_ref.eq.${id})&limit=1`);
+    const [order] = await response.json();
+    return order ? json(order) : json({ error: 'not_found' }, 404);
+  } catch {
+    return json({ error: 'database_unavailable' }, 503);
+  }
+}
 
 export async function onRequestPatch({ request, env, params, data }) {
   const id = params.id;
@@ -23,7 +38,7 @@ export async function onRequestPatch({ request, env, params, data }) {
     }, 409);
 
   let body;
-  try { body = await request.json(); } catch { return json({ error: 'bad_json' }, 400); }
+  try { body = await readJSON(request); } catch (e) { return json({ error: e.message }, e.status || 400); }
 
   const status = String(body.status ?? '');
   if (!VALID_STATUSES.has(status)) return json({ error: 'invalid_status' }, 400);

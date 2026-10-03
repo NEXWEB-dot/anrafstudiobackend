@@ -1,4 +1,6 @@
 node_modules/
+public/
+.npm-cache/
 .dev.vars
 .env
 .env.*

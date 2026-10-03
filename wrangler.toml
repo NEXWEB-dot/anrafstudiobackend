@@ -19,6 +19,7 @@ bucket_name = "store-private"
 # ACCESS_AUD                Access application AUD tag
 # ADMIN_EMAILS              comma-separated: admin@anrafstudio.com,you@example.com
 # TURNSTILE_SECRET          Cloudflare Turnstile secret key
+# TURNSTILE_SITE_KEY        Public site key returned by /api/config to checkout
 # RESEND_API_KEY            Resend API key
 # MAIL_FROM                 noreply@anrafstudio.com (verified sending domain)
 # ADMIN_NOTIFY_EMAIL        admin@anrafstudio.com  (new order notifications)

@@ -3,6 +3,7 @@
 import { rpc, BackendError, isAvailabilityError } from '../../shared/sb.js';
 import { mustUseEmergency, tripBreaker } from '../../shared/mode.js';
 import { sendMail, esc, alertOnce } from '../../shared/alerts.js';
+import { readJSON } from '../../shared/request.js';
 
 const json = (o, status = 200) =>
   new Response(JSON.stringify(o), {
@@ -13,7 +14,7 @@ const json = (o, status = 200) =>
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PHONE = /^\+?[0-9][0-9\s\-]{6,18}$/;
 
-export async function onRequestPost({ request, env, ctx }) {
+export async function onRequestPost({ request, env, waitUntil }) {
   // Security: reject wrong origin immediately
   if (request.headers.get('Origin') !== env.SITE_ORIGIN)
     return json({ error: 'forbidden' }, 403);
@@ -24,22 +25,24 @@ export async function onRequestPost({ request, env, ctx }) {
 
   // Content-type check
   const ct = request.headers.get('Content-Type') ?? '';
-  if (!ct.includes('application/json'))
+  if (ct.split(';')[0].trim().toLowerCase() !== 'application/json')
     return json({ error: 'bad_content_type' }, 400);
 
   // Body size cap (20 KB)
-  const raw = await request.text();
-  if (raw.length > 20_000) return json({ error: 'too_large' }, 413);
-
   let b;
-  try { b = JSON.parse(raw); } catch { return json({ error: 'bad_json' }, 400); }
+  try { b = await readJSON(request); } catch (e) { return json({ error: e.message }, e.status || 400); }
 
   // Honeypot: pretend success but do nothing (never write to DB)
-  if (b.hp) return json({ ok: true });
+  if (b.hp) return json({ error: 'BAD_INPUT' }, 400);
+
+  if (!env.TURNSTILE_SECRET || typeof b.turnstile_token !== 'string' ||
+      !b.turnstile_token || b.turnstile_token.length > 2048)
+    return json({ error: 'BOT_CHECK_FAILED' }, 403);
 
   // 1) Turnstile verification (server-side, mandatory)
   const ts = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
     method: 'POST',
+    signal: AbortSignal.timeout(8000),
     body: new URLSearchParams({
       secret: env.TURNSTILE_SECRET,
       response: String(b.turnstile_token ?? ''),
@@ -47,33 +50,38 @@ export async function onRequestPost({ request, env, ctx }) {
     }),
   }).then((r) => r.json()).catch(() => ({ success: false }));
 
-  if (!ts.success) return json({ error: 'BOT_CHECK_FAILED' }, 403);
+  if (!ts.success || ts.hostname !== new URL(env.SITE_ORIGIN).hostname)
+    return json({ error: 'BOT_CHECK_FAILED' }, 403);
 
   // 2) Validate + normalise everything. NEVER trust client prices.
   const name = String(b.name ?? '').trim();
   const phone = String(b.phone ?? '').trim();
-  const address = String(b.address ?? '').trim().slice(0, 500);
-  const notes = String(b.notes ?? '').trim().slice(0, 500);
+  const address = String(b.address ?? '').trim();
+  const notes = String(b.notes ?? '').trim();
   const ref = String(b.client_ref ?? '');
   const items = Array.isArray(b.items)
-    ? b.items.slice(0, 30).map((i) => ({
-        product_id: String(i.product_id),
-        qty: Number(i.qty),
+    ? b.items.map((i) => ({
+        product_id: i?.product_id,
+        qty: i?.qty,
+        size: i?.size ?? 'Small',
       }))
     : [];
 
   if (
+    ['name', 'phone', 'address'].some(key => typeof b[key] !== 'string') ||
+    (b.notes != null && typeof b.notes !== 'string') ||
     !UUID.test(ref) ||
     name.length < 1 || name.length > 100 ||
     !PHONE.test(phone) ||
-    !address ||
-    !items.length ||
+    !address || address.length > 500 || notes.length > 500 ||
+    !items.length || items.length > 30 ||
+    new Set(items.map(i => `${i.product_id}:${i.size}`)).size !== items.length ||
     items.some(
       (i) =>
         !UUID.test(i.product_id) ||
         !Number.isInteger(i.qty) ||
         i.qty < 1 ||
-        i.qty > 20
+        i.qty > 20 || !['Small', 'Medium', 'Large', 'XL'].includes(i.size)
     )
   )
     return json({ error: 'BAD_INPUT' }, 400);
@@ -113,7 +121,7 @@ export async function onRequestPost({ request, env, ctx }) {
   }
 
   // Send admin email in the background — never blocks the customer response
-  ctx.waitUntil(notifyAdmin(env, args, result));
+  if (!result.duplicate) waitUntil(notifyAdmin(env, args, result));
 
   return json({
     ok: true,
@@ -144,7 +152,7 @@ async function saveOffline(env, a) {
   const existing = await env.PRIVATE.get(key); // idempotent
   if (existing) {
     const o = await existing.json();
-    return { offline: true, total: o.total };
+    return { offline: true, total: o.total, duplicate: true };
   }
 
   // Prices come from the catalog we control (R2), NOT from the client
@@ -156,12 +164,13 @@ async function saveOffline(env, a) {
   const lines = [];
   for (const it of a.p_items) {
     const p = byId.get(it.product_id);
-    if (!p || !p.in_stock) return { error: 'PRODUCT_UNAVAILABLE' };
-    lines.push({ product_id: p.id, name: p.name, price: Number(p.price), qty: it.qty });
+    if (!p || !p.in_stock || p.is_active === false || !Number.isFinite(Number(p.price)) || Number(p.price) < 0)
+      return { error: 'PRODUCT_UNAVAILABLE' };
+    lines.push({ product_id: p.id, name: p.name, price: Number(p.price), qty: it.qty, size: it.size });
     total += Number(p.price) * it.qty;
   }
 
-  await env.PRIVATE.put(
+  const saved = await env.PRIVATE.put(
     key,
     JSON.stringify({
       client_ref: a.p_client_ref,
@@ -172,8 +181,14 @@ async function saveOffline(env, a) {
       notes: a.p_notes,
       items: lines,
       total,
-    })
+    }),
+    { onlyIf: { etagDoesNotMatch: '*' } }
   );
+  if (!saved) {
+    const existingOrder = await env.PRIVATE.get(key);
+    if (!existingOrder) throw new Error('Order capture conflict');
+    return { offline: true, total: (await existingOrder.json()).total, duplicate: true };
+  }
   return { offline: true, total };
 }
 
@@ -193,7 +208,7 @@ async function notifyAdmin(env, args, result) {
       .map((it) => {
         const p = byId.get(it.product_id);
         return `<tr>
-          <td>${esc(p?.name ?? it.product_id)}</td>
+          <td>${esc(p?.name ?? it.product_id)} (${esc(it.size)})</td>
           <td>${esc(String(it.qty))}</td>
           <td>PKR ${esc(String(p?.price ?? '?'))}</td>
         </tr>`;

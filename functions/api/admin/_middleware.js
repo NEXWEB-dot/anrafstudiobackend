@@ -5,22 +5,31 @@
 // 3. Origin check (CSRF defense) on non-GET requests
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
-let JWKS; // cached across invocations in the same isolate
+let JWKS;
+let jwksIssuer;
 
 export async function onRequest({ request, env, data, next }) {
   const token = request.headers.get('Cf-Access-Jwt-Assertion');
   if (!token) return new Response('Unauthorized', { status: 401 });
 
   try {
-    JWKS ??= createRemoteJWKSet(
+    if (!env.ACCESS_AUD || !env.SITE_ORIGIN || !env.ADMIN_EMAILS ||
+        !/^[a-z0-9-]+\.cloudflareaccess\.com$/i.test(env.ACCESS_TEAM_DOMAIN || ''))
+      return new Response('Unauthorized', { status: 401 });
+    if (jwksIssuer !== env.ACCESS_TEAM_DOMAIN) {
+      JWKS = createRemoteJWKSet(
       new URL(`https://${env.ACCESS_TEAM_DOMAIN}/cdn-cgi/access/certs`)
-    );
+      );
+      jwksIssuer = env.ACCESS_TEAM_DOMAIN;
+    }
     const { payload } = await jwtVerify(token, JWKS, {
       issuer: `https://${env.ACCESS_TEAM_DOMAIN}`,
       audience: env.ACCESS_AUD,
+      algorithms: ['RS256'],
+      requiredClaims: ['exp', 'email', 'aud', 'iss'],
     });
 
-    const allow = env.ADMIN_EMAILS.split(',').map((s) => s.trim().toLowerCase());
+    const allow = env.ADMIN_EMAILS.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
     if (!allow.includes(String(payload.email ?? '').toLowerCase()))
       return new Response('Forbidden', { status: 403 });
 

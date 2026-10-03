@@ -6,7 +6,7 @@
 //   0 3 * * *    — nightly: backup, prune, orphan sweep, deploy hook
 
 import { sb, BackendError, isAvailabilityError } from '../../shared/sb.js';
-import { getMode, tripBreaker } from '../../shared/mode.js';
+import { getMode, tripBreaker, mustUseEmergency } from '../../shared/mode.js';
 import { syncCatalog, recordSyncFailure } from '../../shared/catalog.js';
 import { replayPending } from '../../shared/emergency.js';
 import { alertOnce } from '../../shared/alerts.js';
@@ -70,6 +70,7 @@ async function probe(env) {
 // Keep-alive (a real query prevents Supabase free-tier inactivity pause).
 // Also repairs any sync that was missed between manual saves.
 async function reconcile(env) {
+  if (await mustUseEmergency(env)) return probe(env);
   try {
     await sb(env, 'products?select=id&limit=1');
     await syncCatalog(env);
@@ -99,30 +100,33 @@ async function nightly(env) {
 async function exportBackup(env) {
   try {
     const curObj = await env.PRIVATE.get('state/backup-cursor.json');
-    const since = curObj ? (await curObj.json()).since : '1970-01-01T00:00:00Z';
-    const day = new Date().toISOString().slice(0, 10);
+    const cursor = curObj ? await curObj.json() : {};
+    let since = cursor.since || '1970-01-01T00:00:00Z';
+    let lastId = cursor.id || '00000000-0000-0000-0000-000000000000';
+    const snapshotTime = new Date().toISOString();
+    const day = snapshotTime.slice(0, 10);
 
     const rows = [];
     let offset = 0;
-    let maxTs = since;
 
     // Page through orders updated since last backup
     // Cap at 20,000 rows to stay within the 50-subrequest free-plan limit
     for (;;) {
       const r = await sb(
         env,
-        `orders?select=*,order_items(*)&updated_at=gt.${encodeURIComponent(since)}&order=updated_at.asc&limit=1000&offset=${offset}`
+        `orders?select=*,order_items(*)&updated_at=lte.${encodeURIComponent(snapshotTime)}&or=(updated_at.gt.${encodeURIComponent(since)},and(updated_at.eq.${encodeURIComponent(since)},id.gt.${lastId}))&order=updated_at.asc,id.asc&limit=1000`
       );
       const page = await r.json();
       if (!page.length) break;
       rows.push(...page);
-      maxTs = page[page.length - 1].updated_at;
+      since = page[page.length - 1].updated_at;
+      lastId = page[page.length - 1].id;
       offset += page.length;
       if (page.length < 1000 || offset >= 20_000) break;
     }
 
     if (rows.length) {
-      await env.PRIVATE.put(`backups/db/orders-${day}.json`, JSON.stringify(rows));
+      await env.PRIVATE.put(`backups/db/orders-${snapshotTime.replaceAll(':', '-')}-${crypto.randomUUID()}.json`, JSON.stringify(rows));
     }
 
     // Also snapshot the current product catalog
@@ -133,7 +137,7 @@ async function exportBackup(env) {
 
     await env.PRIVATE.put(
       'state/backup-cursor.json',
-      JSON.stringify({ since: maxTs })
+      JSON.stringify({ since, id: lastId })
     );
   } catch (e) {
     await alertOnce(env, 'backup-failed', `Nightly backup failed: ${e}`);
@@ -175,11 +179,27 @@ async function sweepOrphans(env) {
     if (!admObj) return;
 
     const adm = await admObj.json();
+    const pubObj = await env.PUBLIC.get('catalog/products.json');
+    if (!pubObj) return;
+    const pub = await pubObj.json();
     const referenced = new Set();
     for (const p of adm.products ?? []) {
       for (const img of p.images ?? []) {
         if (img.r2_key) referenced.add(img.r2_key);
         if (img.thumb_r2_key) referenced.add(img.thumb_r2_key);
+      }
+    }
+
+    // Failed/guarded publication can leave images live after an admin edit.
+    for (const p of pub.products ?? []) {
+      for (const img of p.images ?? []) {
+        for (const value of [img.url, img.thumb]) {
+          try {
+            const url = new URL(value);
+            if (url.origin === new URL(env.PUBLIC_CDN_ORIGIN).origin)
+              referenced.add(url.pathname.slice(1));
+          } catch {}
+        }
       }
     }
 

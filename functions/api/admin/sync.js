@@ -1,3 +1,5 @@
+import { readJSON } from '../../../shared/request.js';
+import { mustUseEmergency } from '../../../shared/mode.js';
 // functions/api/admin/sync.js — manual "Sync storefront now" button
 import { syncCatalog, SyncRejected, recordSyncFailure } from '../../../shared/catalog.js';
 
@@ -8,8 +10,9 @@ const json = (o, s = 200) =>
   });
 
 export async function onRequestPost({ request, env, data }) {
+  if (await mustUseEmergency(env)) return json({ error: 'Pending recovery must complete before syncing.' }, 409);
   let body = {};
-  try { body = await request.json(); } catch {}
+  try { body = await readJSON(request); } catch (e) { return json({ error: e.message }, e.status || 400); }
 
   const confirmShrink = body.confirmShrink === true;
 

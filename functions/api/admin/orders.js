@@ -36,6 +36,8 @@ export async function onRequestGet({ request, env }) {
   // Normal mode: Supabase query
   const limit = Math.min(Number(url.searchParams.get('limit') ?? 50), 100);
   const offset = Math.max(Number(url.searchParams.get('offset') ?? 0), 0);
+  if (!Number.isInteger(limit) || limit < 1 || !Number.isSafeInteger(offset))
+    return json({ error: 'invalid_pagination' }, 400);
   const statusParam = url.searchParams.get('status');
 
   let query = `orders?select=*,order_items(*)&order=created_at.desc&limit=${limit}&offset=${offset}`;

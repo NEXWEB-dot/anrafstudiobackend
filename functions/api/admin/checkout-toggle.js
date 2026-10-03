@@ -1,3 +1,4 @@
+import { readJSON } from '../../../shared/request.js';
 // functions/api/admin/checkout-toggle.js — pause / resume checkout kill switch
 const json = (o, s = 200) =>
   new Response(JSON.stringify(o), {
@@ -7,7 +8,7 @@ const json = (o, s = 200) =>
 
 export async function onRequestPost({ request, env, data }) {
   let body;
-  try { body = await request.json(); } catch { return json({ error: 'bad_json' }, 400); }
+  try { body = await readJSON(request); } catch (e) { return json({ error: e.message }, e.status || 400); }
 
   if (typeof body.paused !== 'boolean')
     return json({ error: 'paused must be boolean' }, 400);

@@ -1,3 +1,4 @@
+import { readJSON } from '../../../../shared/request.js';
 // functions/api/admin/products/[id].js — PUT (update) and DELETE
 import { saveProduct, deleteProduct, ValidationError } from '../_product-ops.js';
 
@@ -14,7 +15,7 @@ export async function onRequestPut({ request, env, params, data }) {
   if (!UUID.test(id)) return json({ error: 'invalid_id' }, 400);
 
   let body;
-  try { body = await request.json(); } catch { return json({ error: 'bad_json' }, 400); }
+  try { body = await readJSON(request); } catch (e) { return json({ error: e.message }, e.status || 400); }
 
   try {
     body.id = id; // URL param id always wins

@@ -22,7 +22,8 @@ export const tripped = (s) => s.mode === 'emergency' && Date.now() < s.until;
  * Mixing normal and emergency writes would corrupt the replay queue.
  */
 export async function mustUseEmergency(env) {
-  if (tripped(await getMode(env))) return true;
+  // Only the recovery worker may exit emergency mode after replay completes.
+  if ((await getMode(env)).mode === 'emergency') return true;
   const q = await env.PRIVATE.get('state/pending-ops.json');
   if (!q) return false;
   return ((await q.json()).ops ?? []).length > 0;

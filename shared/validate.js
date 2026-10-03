@@ -11,7 +11,7 @@ export class ValidationError extends Error {
 const SLUG_RE = /^[a-z0-9-]{1,120}$/;
 
 export function validateProduct(p, cdnOrigin) {
-  if (!p || typeof p !== 'object') throw new ValidationError('Invalid product object');
+  if (!p || typeof p !== 'object' || Array.isArray(p)) throw new ValidationError('Invalid product object');
 
   // slug
   if (!SLUG_RE.test(p.slug ?? ''))
@@ -28,19 +28,19 @@ export function validateProduct(p, cdnOrigin) {
 
   // price
   const price = Number(p.price);
-  if (!Number.isFinite(price) || price < 0 || !/^\d+(\.\d{1,2})?$/.test(String(price)))
+  if (p.price == null || p.price === '' || typeof p.price === 'boolean' || !Number.isFinite(price) || price < 0 || price > 9999999999.99 || !/^\d+(\.\d{1,2})?$/.test(String(price)))
     throw new ValidationError('price must be a non-negative number with at most 2 decimal places');
 
   // compare_at_price (optional)
   if (p.compare_at_price != null && p.compare_at_price !== '') {
     const cap = Number(p.compare_at_price);
-    if (!Number.isFinite(cap) || cap < 0 || !/^\d+(\.\d{1,2})?$/.test(String(cap)))
+    if (!Number.isFinite(cap) || cap < 0 || cap > 9999999999.99 || !/^\d+(\.\d{1,2})?$/.test(String(cap)))
       throw new ValidationError('compare_at_price must be a non-negative number with at most 2 decimal places');
   }
 
   // stock
   const stock = Number(p.stock ?? 0);
-  if (!Number.isInteger(stock) || stock < 0)
+  if (!Number.isInteger(stock) || stock < 0 || stock > 2147483647)
     throw new ValidationError('stock must be a non-negative integer');
 
   // booleans
@@ -54,10 +54,19 @@ export function validateProduct(p, cdnOrigin) {
   if (!Array.isArray(images)) throw new ValidationError('images must be an array');
   if (images.length > 10) throw new ValidationError('at most 10 images per product');
   for (const img of images) {
-    if (!String(img.r2_key ?? '').startsWith('img/'))
-      throw new ValidationError('image r2_key must start with img/');
-    if (cdnOrigin && !String(img.url ?? '').startsWith(cdnOrigin))
-      throw new ValidationError(`image url must start with ${cdnOrigin}`);
+    if (!img || typeof img !== 'object') throw new ValidationError('Invalid image');
+    for (const [key, url] of [[img.r2_key, img.url], [img.thumb_r2_key, img.thumb_url]]) {
+      if (key == null && url == null && key !== img.r2_key) continue;
+      if (typeof key !== 'string' || !/^img\/[a-zA-Z0-9_-]+\.(webp|jpg|jpeg|png)$/.test(key))
+        throw new ValidationError('Invalid image key');
+      let expected;
+      try {
+        const origin = new URL(cdnOrigin);
+        if (origin.protocol !== 'https:') throw new Error();
+        expected = `${origin.origin}/${key}`;
+      } catch { throw new ValidationError('Image CDN is not configured'); }
+      if (url !== expected) throw new ValidationError('Image URL must match its CDN object key');
+    }
   }
 
   // Assemble validated + normalised product

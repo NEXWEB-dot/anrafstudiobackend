@@ -14,8 +14,9 @@ try {
   const j = await r.json();
   if (!r.ok || !Array.isArray(j.products)) throw new Error('bad payload');
 
-  await mkdir('public/data', { recursive: true });
-  await writeFile('public/data/products.fallback.json', JSON.stringify(j));
+  const output = new URL('../public/data/', import.meta.url);
+  await mkdir(output, { recursive: true });
+  await writeFile(new URL('products.fallback.json', output), JSON.stringify(j));
   console.log(`✓ fallback refreshed: ${j.products.length} products`);
 } catch (e) {
   // Exit code stays 0 — build must succeed even if the CDN isn't set up yet

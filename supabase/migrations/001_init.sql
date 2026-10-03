@@ -58,6 +58,7 @@ create table order_items (
   order_id uuid not null references orders(id) on delete cascade,
   product_id uuid references products(id) on delete set null,
   product_name text not null,                       -- snapshot: survives product deletion
+  size text not null default 'Small' check (size in ('Small','Medium','Large','XL')),
   quantity int not null check (quantity between 1 and 50),
   price_at_purchase numeric(12,2) not null          -- snapshot: later price edits never rewrite history
 );
@@ -168,8 +169,8 @@ begin
       if p_force then
         -- Product gone since the offline order: keep the line as the customer saw it
         v_price := coalesce((v_item->>'price')::numeric, 0);
-        insert into order_items (order_id, product_id, product_name, quantity, price_at_purchase)
-        values (v_order.id, null, coalesce(v_item->>'name','unknown product'), v_qty, v_price);
+        insert into order_items (order_id, product_id, product_name, size, quantity, price_at_purchase)
+        values (v_order.id, null, coalesce(v_item->>'name','unknown product'), coalesce(v_item->>'size','Small'), v_qty, v_price);
         v_total := v_total + v_price * v_qty;
         continue;
       end if;
@@ -187,8 +188,8 @@ begin
     end if;
 
     v_price := case when p_force then coalesce((v_item->>'price')::numeric, v_p.price) else v_p.price end;
-    insert into order_items (order_id, product_id, product_name, quantity, price_at_purchase)
-    values (v_order.id, v_p.id, v_p.name, v_qty, v_price);
+    insert into order_items (order_id, product_id, product_name, size, quantity, price_at_purchase)
+    values (v_order.id, v_p.id, v_p.name, coalesce(v_item->>'size','Small'), v_qty, v_price);
     v_total := v_total + v_price * v_qty;
   end loop;
 
@@ -211,7 +212,7 @@ begin
   then raise exception 'BAD_TRANSITION'; end if;
 
   if p_status = 'cancelled' then
-    for r in select product_id, quantity from order_items where order_id = p_order_id and product_id is not null loop
+    for r in select product_id, sum(quantity) as quantity from order_items where order_id = p_order_id and product_id is not null group by product_id order by product_id loop
       update products set stock = stock + r.quantity where id = r.product_id and track_stock;
     end loop;
   end if;
