@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "dev": "npx wrangler pages dev public --compatibility-date=2026-01-01"
+    "dev": "npx wrangler pages dev dist --compatibility-date=2026-01-01"
   },
   "dependencies": {
     "jose": "5.9.6"

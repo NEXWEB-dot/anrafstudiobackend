@@ -46,7 +46,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     body: new URLSearchParams({
       secret: env.TURNSTILE_SECRET,
       response: String(b.turnstile_token ?? ''),
-      remoteip: request.headers.get('CF-Connecting-IP') ?? '',
+      // remoteip is optional; cross-zone Worker proxies do not retain the shopper's IP.
     }),
   }).then((r) => r.json()).catch(() => ({ success: false }));
 

@@ -1,6 +1,20 @@
 # ANRAF Studio — Backend Architecture & Services
 
-Production-ready, resilient e-commerce backend built with **Cloudflare Pages Functions**, **Cloudflare Workers (Cron)**, **Cloudflare R2**, and **Supabase (PostgreSQL)**.
+E-commerce backend built with **Cloudflare Pages Functions**, **Cloudflare Workers (Cron)**, **Cloudflare R2**, and **Supabase (PostgreSQL)**. Live configuration and staging verification are required before launch.
+
+## Current separate-repository deployment
+
+Use Node.js 22+, `npm ci`, then `npm run build`. Deploy this repository to Cloudflare
+Pages with output `dist/`; `functions/` is compiled by Pages. This is an API-only build
+and does not require a neighboring frontend or admin checkout. The frontend points its
+`BACKEND_ORIGIN` at this project's HTTPS URL and bridges shopper routes on its own origin.
+`/api/catalog` serves the R2 catalog without exposing Supabase credentials.
+
+Set `SITE_ORIGIN` to the actual frontend origin and `ADMIN_ORIGIN` to the admin origin.
+The Access application must protect the backend `/api/admin/*` routes. The admin site's
+own deployment still needs secure connectivity to these routes; it is not bundled here.
+Set the public `TURNSTILE_SITE_KEY` in addition to the private `TURNSTILE_SECRET`.
+For an existing database, apply `002_order_sizes.sql` before the new checkout is used.
 
 ## 0. Architecture & Guarantees
 
@@ -74,8 +88,8 @@ Create two R2 buckets in Cloudflare:
 
 ### 2.3 Cloudflare Pages (API & Admin Dashboard)
 1. Deploy this repository to **Cloudflare Pages**.
-   - Build command: `node scripts/fetch-fallback.mjs`
-   - Build output directory: `public`
+   - Build command: `npm run build`
+   - Build output directory: `dist`
 2. In Cloudflare Pages Settings -> **Environment variables**, configure:
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_KEY`

@@ -42,7 +42,7 @@ export async function onRequest({ request, env, data, next }) {
   // CSRF: Origin check on all mutating requests
   if (
     !['GET', 'HEAD'].includes(request.method) &&
-    request.headers.get('Origin') !== env.SITE_ORIGIN
+    request.headers.get('Origin') !== (env.ADMIN_ORIGIN || env.SITE_ORIGIN)
   )
     return new Response('Bad origin', { status: 403 });
 

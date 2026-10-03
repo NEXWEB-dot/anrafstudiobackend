@@ -1,5 +1,5 @@
 name = "anraf-studio"
-pages_build_output_dir = "public"
+pages_build_output_dir = "dist"
 compatibility_date = "2026-01-01"
 
 [[r2_buckets]]
@@ -14,6 +14,7 @@ bucket_name = "store-private"
 # SUPABASE_URL              https://your-project.supabase.co
 # SUPABASE_SERVICE_KEY      service_role JWT or sb_secret_… key (server only, never in browser)
 # SITE_ORIGIN               https://anrafstudio.com  (exact, used for Origin checks)
+# ADMIN_ORIGIN              Exact separate admin dashboard origin (if different)
 # PUBLIC_CDN_ORIGIN         https://cdn.anrafstudio.com
 # ACCESS_TEAM_DOMAIN        your-team.cloudflareaccess.com
 # ACCESS_AUD                Access application AUD tag
