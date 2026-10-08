@@ -1,5 +1,16 @@
 name = "anraf-studio"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-01-01"
-# Sanity + Resend only. No R2 or Supabase bindings.
-# Set server-only secrets and public settings using .env.example.
+
+# ── Public vars (safe to commit) ─────────────────────────────────────────────
+[vars]
+SITE_ORIGIN         = "https://anraaf.com"
+SANITY_PROJECT_ID   = "m7hktaor"
+SANITY_DATASET      = "production"
+MAIL_FROM           = "orders@anraafstudio.com"   # Note: use onboarding@resend.dev until custom domain is verified
+ADMIN_NOTIFY_EMAIL  = "faisalshayan444@gmail.com"
+CHECKOUT_ENABLED    = "true"
+
+# ── Secrets (set via: npx wrangler pages secret put <NAME>) ──────────────────
+# RESEND_API_KEY    → resend.com/api-keys
+# TURNSTILE_SECRET  → Cloudflare Dashboard → Turnstile → your widget → Secret key
