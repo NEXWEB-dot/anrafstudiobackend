@@ -38,3 +38,7 @@ Run `npm test` for checkout security and failure-handling regression coverage.
 ## Sanity Studio
 
 The complete Studio source is in sanity-studio/. It is a separate application: run npm ci and npm run build from that directory. Host its dist/ output as a separate Cloudflare Pages project or use Sanity hosting. Keep the backend project's root directory at the repository root. Studio dependencies and build output are intentionally not committed.
+
+## Backups
+
+Published product JSON is kept in backups/sanity.snapshot.json. Add backup product images to assets/. These folders are not copied into the API deployment. Run node scripts/backup-products.mjs to refresh the product backup.
