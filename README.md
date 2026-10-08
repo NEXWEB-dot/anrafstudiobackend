@@ -1,128 +1,40 @@
-# ANRAF Studio — Backend Architecture & Services
+# ANRAF Sanity + Resend API
 
-E-commerce backend built with **Cloudflare Pages Functions**, **Cloudflare Workers (Cron)**, **Cloudflare R2**, and **Supabase (PostgreSQL)**. Live configuration and staging verification are required before launch.
+Products are read from Sanity's public API CDN and order requests are sent through
+Resend. No Supabase, R2, legacy admin API, or cron worker is required.
 
-## Current separate-repository deployment
+## Cloudflare Pages setup
 
-Use Node.js 22+, `npm ci`, then `npm run build`. Deploy this repository to Cloudflare
-Pages with output `dist/`; `functions/` is compiled by Pages. This is an API-only build
-and does not require a neighboring frontend or admin checkout. The frontend points its
-`BACKEND_ORIGIN` at this project's HTTPS URL and bridges shopper routes on its own origin.
-`/api/catalog` serves the R2 catalog without exposing Supabase credentials.
+- Install dependencies with `npm ci` (Node 22 or newer).
+- Build command: `npm run build`; output directory: `dist`.
+- Deploy from the repository root so Cloudflare includes `functions/`.
+- Copy the setting names from `.env.example` into Cloudflare's environment settings.
+  Store `RESEND_API_KEY` and `TURNSTILE_SECRET` as encrypted secrets, never in Git.
+- Set `SITE_ORIGIN` to the exact storefront origin, with no trailing slash or path.
+- Set `MAIL_FROM` to a sender on your verified Resend domain and `ADMIN_NOTIFY_EMAIL`
+  to the inbox that receives orders. Configure Turnstile for the storefront hostname.
+- Keep `CHECKOUT_ENABLED=false` until configured; enable for a controlled test order
+  and verify actual email receipt before accepting customer traffic.
 
-Set `SITE_ORIGIN` to the actual frontend origin and `ADMIN_ORIGIN` to the admin origin.
-The Access application must protect the backend `/api/admin/*` routes. The admin site's
-own deployment still needs secure connectivity to these routes; it is not bundled here.
-Set the public `TURNSTILE_SITE_KEY` in addition to the private `TURNSTILE_SECRET`.
-For an existing database, apply `002_order_sizes.sql` before the new checkout is used.
+If the frontend is also on Cloudflare Pages, configure its `BACKEND_ORIGIN` runtime
+variable with this backend's HTTPS origin. Its existing bridge handles checkout.
+For GitHub Pages, set the frontend's `js/api-config.js` API_ORIGIN instead.
 
-## 0. Architecture & Guarantees
+## Behavior and limits
 
-This architecture implements a **graceful degradation / offline-first** design:
+- Published-only Sanity queries, five-minute catalog cache per edge location,
+  separate 60-second checkout cache, and full-response catalog ETags.
+- Checkout validates origins, bounded input, Turnstile, stock status, sizes and prices.
+- Customer details go to Resend only; never to the public Sanity product dataset.
+- Success means Resend accepted the message, not guaranteed inbox delivery.
+- Resend retry deduplication lasts 24 hours; there is no private order database,
+  order-management dashboard, automatic inventory reservation or outage order queue.
+- Legacy database code is removed from deployment. Do not delete historical production
+  order records when migrating. This source change does not delete cloud resources.
 
-| Guarantee | How It Works |
-|---|---|
-| **G1** | The public storefront never queries Supabase directly. It reads static catalog JSON from Cloudflare R2 CDN with automated fallbacks. Bot traffic cannot consume Supabase quota. |
-| **G2** | If Supabase is paused, rate-limited (HTTP 429), quota-restricted (HTTP 402), or down, the storefront continues to display all products from R2. |
-| **G3** | Zero order loss: Orders are saved atomically in Supabase via RPC. If Supabase is unavailable, orders are captured in R2 (`orders-pending/`) and emailed to admin via Resend, then replayed automatically upon recovery. |
-| **G4** | **Emergency Mode**: If Supabase is down, the admin dashboard edits `products.json` directly in R2 and queues changes (`state/pending-ops.json`) for automatic replay. |
-| **G5** | Zero secrets in browsers: Supabase is accessible only from server code using the `service_role` key. Postgres RLS is deny-all for all public/authenticated roles. |
-| **G6** | Prices, order totals, and stock are strictly validated and computed server-side. |
-| **G7** | Guarded catalog sync: Validates payload shape and enforces a shrink-guard before publishing to R2. |
-| **G8** | Automatic alerting via Resend when errors or circuit-breaker trips occur. |
+Run `npm test` for checkout security and failure-handling regression coverage.
 
----
 
-## 1. Directory Structure
+## Sanity Studio
 
-```
-/functions
-  /api/checkout.js               # Public endpoint: Turnstile -> validate -> place_order RPC -> admin email
-  /api/admin/_middleware.js      # Cloudflare Access JWT verification & Origin CSRF defense
-  /api/admin/_product-ops.js     # Shared product upsert/delete (normal + emergency mode)
-  /api/admin/status.js           # System health & emergency status
-  /api/admin/products.js         # Products listing & creation
-  /api/admin/products/[id].js    # Product update & deletion
-  /api/admin/orders.js           # Orders listing (with offline R2 fallback)
-  /api/admin/orders/[id].js      # Order status lifecycle management
-  /api/admin/upload.js           # Image upload to R2 with magic-byte validation
-  /api/admin/sync.js             # Manual catalog sync trigger
-  /api/admin/checkout-toggle.js  # Emergency checkout kill switch
-
-/shared
-  sb.js                          # PostgREST Supabase client with hard timeouts & error classification
-  mode.js                        # Circuit breaker state machine in R2
-  catalog.js                     # Guarded catalog rebuild & validation (Supabase -> R2)
-  emergency.js                   # R2 compare-and-swap (CAS) product operations & replay engine
-  alerts.js                      # Resend email alert client with cooldown deduplication
-  validate.js                    # Server-side input validation
-
-/workers/cron
-  index.js                       # 3 scheduled cron tasks (probe, reconcile, nightly maintenance)
-  wrangler.toml                  # Cron worker deployment config
-
-/supabase/migrations
-  001_init.sql                   # Complete PostgreSQL schema, atomic RPCs, and RLS deny-all policies
-
-/public
-  /admin/                        # Static Admin Dashboard UI (protected by Cloudflare Access)
-  /data/products.fallback.json   # Seed fallback catalog refreshed during build
-
-/scripts
-  fetch-fallback.mjs             # Pages build script to download latest catalog from R2 CDN
-```
-
----
-
-## 2. Setup & Deployment
-
-### 2.1 Database Setup (Supabase)
-1. In your **Supabase Dashboard**, open the **SQL Editor**.
-2. Run the entire script in [`supabase/migrations/001_init.sql`](./supabase/migrations/001_init.sql).
-3. Verify that `anon` has no permissions to query `orders` or `products`.
-
-### 2.2 Cloudflare R2 Buckets
-Create two R2 buckets in Cloudflare:
-1. `store-public`: Connect to your custom domain e.g. `cdn.yourdomain.com` (stores `catalog/products.json` and `img/*`).
-2. `store-private`: **No public domain** (stores `catalog/admin-products.json`, `state/*`, `orders-pending/*`, and `backups/*`).
-
-### 2.3 Cloudflare Pages (API & Admin Dashboard)
-1. Deploy this repository to **Cloudflare Pages**.
-   - Build command: `npm run build`
-   - Build output directory: `dist`
-2. In Cloudflare Pages Settings -> **Environment variables**, configure:
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_KEY`
-   - `SITE_ORIGIN` (e.g. `https://yourdomain.com`)
-   - `PUBLIC_CDN_ORIGIN` (e.g. `https://cdn.yourdomain.com`)
-   - `ACCESS_TEAM_DOMAIN` (e.g. `your-team.cloudflareaccess.com`)
-   - `ACCESS_AUD` (Application AUD tag from Cloudflare Zero Trust)
-   - `ADMIN_EMAILS` (comma-separated allowlist)
-   - `TURNSTILE_SECRET` (Turnstile secret key for checkout bot check)
-   - `RESEND_API_KEY`
-   - `MAIL_FROM` (e.g. `orders@yourdomain.com`)
-   - `ADMIN_NOTIFY_EMAIL` (e.g. `admin@yourdomain.com`)
-   - `ALERT_EMAIL` (e.g. `ops@yourdomain.com`)
-   - `WHATSAPP_URL` (e.g. `https://wa.me/923000000000`)
-3. Bind both R2 buckets under **Settings -> Functions -> R2 bucket bindings**:
-   - `PUBLIC` -> `store-public`
-   - `PRIVATE` -> `store-private`
-
-### 2.4 Cloudflare Cron Worker
-Deploy the cron worker from `/workers/cron`:
-```bash
-cd workers/cron
-npx wrangler secret put SUPABASE_URL
-npx wrangler secret put SUPABASE_SERVICE_KEY
-npx wrangler secret put PUBLIC_CDN_ORIGIN
-npx wrangler secret put RESEND_API_KEY
-npx wrangler secret put MAIL_FROM
-npx wrangler secret put ALERT_EMAIL
-npx wrangler secret put ADMIN_NOTIFY_EMAIL
-npx wrangler deploy
-```
-
-The worker automatically executes:
-- `*/5 * * * *` — Probes Supabase health and replays pending offline operations.
-- `0 */6 * * *` — Reconciles catalog sync and keeps Supabase active (prevents inactivity pause).
-- `0 3 * * *` — Nightly backup export to R2, orphan image cleanup, and backup retention pruning.
+The complete Studio source is in sanity-studio/. It is a separate application: run npm ci and npm run build from that directory. Host its dist/ output as a separate Cloudflare Pages project or use Sanity hosting. Keep the backend project's root directory at the repository root. Studio dependencies and build output are intentionally not committed.

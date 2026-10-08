@@ -1,17 +1,15 @@
 {
   "name": "anraf-studio-store",
   "version": "1.0.0",
-  "description": "ANRAF Studio e-commerce store — Cloudflare Pages + Supabase",
+  "description": "ANRAF Studio e-commerce store — Sanity CDN + Resend",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "dev": "npx wrangler pages dev dist --compatibility-date=2026-01-01"
-  },
-  "dependencies": {
-    "jose": "5.9.6"
+    "dev": "npx wrangler pages dev dist --compatibility-date=2026-01-01",
+    "test": "node --test tests/*.test.mjs"
   },
   "devDependencies": {
-    "wrangler": "4.147.0"
+    "wrangler": "4.149.0"
   },
   "engines": {
     "node": ">=22"
