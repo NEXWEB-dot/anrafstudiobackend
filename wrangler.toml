@@ -11,6 +11,7 @@ TURNSTILE_SITE_KEY  = "0x4AAAAAAFRsQ5VSe_CG8TtY"
 MAIL_FROM           = "orders@anraaf.com"
 ADMIN_NOTIFY_EMAIL  = "faisalshayan444@gmail.com"
 CHECKOUT_ENABLED    = "true"
+DELIVERY_FEE        = "260"
 
 # ── Secrets (set via: npx wrangler pages secret put <NAME>) ──────────────────
 # RESEND_API_KEY    → resend.com/api-keys

@@ -75,7 +75,9 @@ export async function onRequestPost({request, env}) {
     cents += lineCents;
     lines.push(`<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;"><strong>${esc(p.name)}</strong></td><td style="padding:8px 12px;border-bottom:1px solid #eee;">${esc(item.size)}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;">${item.qty}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;">PKR ${(lineCents / 100).toLocaleString('en-PK')}</td></tr>`);
   }
-  const total = cents / 100;
+  const subtotal = cents / 100;
+  const deliveryFee = Number(env.DELIVERY_FEE || 260);
+  const total = subtotal + deliveryFee;
   const shortRef = b.client_ref.slice(0,8).toUpperCase();
 
   const isBank = b.payment_method === 'bank' || (typeof b.notes === 'string' && /BANK|WHATSAPP|RAAST/i.test(b.notes));
@@ -107,6 +109,14 @@ export async function onRequestPost({request, env}) {
         </thead>
         <tbody>
           ${lines.join('')}
+          <tr>
+            <td colspan="3" style="padding:10px 12px;border-bottom:1px solid #eee;text-align:right;color:#666;"><strong>Subtotal</strong></td>
+            <td style="padding:10px 12px;border-bottom:1px solid #eee;text-align:right;">PKR ${subtotal.toLocaleString('en-PK')}</td>
+          </tr>
+          <tr>
+            <td colspan="3" style="padding:10px 12px;border-bottom:1px solid #eee;text-align:right;color:#666;"><strong>Delivery Fee</strong></td>
+            <td style="padding:10px 12px;border-bottom:1px solid #eee;text-align:right;">PKR ${deliveryFee.toLocaleString('en-PK')}</td>
+          </tr>
         </tbody>
       </table>
       <div style="display:flex;justify-content:space-between;padding:14px 12px;background:#111;color:#fff;font-size:16px;font-weight:bold;border-radius:4px;">
@@ -214,8 +224,12 @@ export async function onRequestPost({request, env}) {
                 </table>
                 <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-top:10px;">
                   <tr>
-                    <td align="right" style="padding:6px 0;font-size:13px;color:#666;">Delivery (Pakistan Nationwide)</td>
-                    <td align="right" width="120" style="padding:6px 0;font-size:12px;font-weight:700;color:#25d366;">COMPLIMENTARY</td>
+                    <td align="right" style="padding:6px 0;font-size:13px;color:#666;">Subtotal</td>
+                    <td align="right" width="130" style="padding:6px 0;font-size:13px;font-weight:600;color:#111;">PKR ${subtotal.toLocaleString('en-PK')}</td>
+                  </tr>
+                  <tr>
+                    <td align="right" style="padding:6px 0;font-size:13px;color:#666;">Delivery Fee (Pakistan Nationwide)</td>
+                    <td align="right" width="130" style="padding:6px 0;font-size:13px;font-weight:600;color:#111;">PKR ${deliveryFee.toLocaleString('en-PK')}</td>
                   </tr>
                   <tr>
                     <td align="right" style="padding:12px 0;border-top:2px solid #111;font-size:14px;font-weight:700;color:#111;text-transform:uppercase;letter-spacing:0.08em;">Total Payable</td>
@@ -345,6 +359,8 @@ export async function onRequestPost({request, env}) {
     ok: true,
     ref: b.client_ref,
     order_number: shortRef,
+    subtotal,
+    delivery_fee: deliveryFee,
     total,
     method: isBank ? 'bank' : 'cod',
     resend: {
