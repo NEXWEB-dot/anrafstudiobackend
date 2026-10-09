@@ -120,8 +120,11 @@ export async function onRequestPost({request, env}) {
 
   const primarySender = env.MAIL_FROM || 'orders@anraaf.com';
 
+  let emailRes = null;
+  let emailData = null;
+
   try {
-    let emailRes = await fetch('https://api.resend.com/emails', {
+    emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       signal: AbortSignal.timeout(10000),
       headers: {
@@ -156,13 +159,14 @@ export async function onRequestPost({request, env}) {
       });
     }
 
-    const emailData = await emailRes.json().catch(() => null);
+    emailData = await emailRes.json().catch(() => null);
     if (!emailRes.ok || !emailData?.id) {
       console.warn('Resend email dispatch failed:', emailData);
       // Still return order confirmation so customer gets reference and can send via WhatsApp!
     }
   } catch (err) {
     console.warn('Resend fetch exception:', err);
+    emailData = { exception: err.message };
   }
 
   return json({
@@ -170,6 +174,11 @@ export async function onRequestPost({request, env}) {
     ref: b.client_ref,
     order_number: b.client_ref.slice(0,8).toUpperCase(),
     total,
-    method: isBank ? 'bank' : 'cod'
+    method: isBank ? 'bank' : 'cod',
+    resend: {
+      ok: emailRes?.ok,
+      status: emailRes?.status,
+      data: emailData,
+    }
   });
 }
