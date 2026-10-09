@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>New Order Notification — ANRAF Studio</title>
+  <style>
+    @media only screen and (max-width:480px) {
+      .content { padding-left:22px !important; padding-right:22px !important; }
+      .heading { font-size:30px !important; line-height:38px !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#eeeae3;color:#292720;">
+  <!-- From: ANRAF Studio <orders@anraaf.com>
+       Subject: New order received — {{order_reference}}
+       Recipient: the store owner's configured inbox.
+       Replace and HTML-escape all text placeholders before sending.
+       Repeat the order-item row on the server for multiple products.
+       Publishing this file as a template does not connect it to checkout. -->
+  <div style="display:none;max-height:0;max-width:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;mso-hide:all;">
+    New order {{order_reference}} from {{customer_name}}. Total PKR {{order_total}}.
+  </div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eeeae3;">
+    <tr><td align="center" style="padding:32px 12px;">
+      <!--[if mso]><table role="presentation" width="600" align="center"><tr><td><![endif]-->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fcfaf6;border:1px solid #ded7ca;">
+        <tr><td align="center" style="padding:34px 20px 29px;background:#27231d;border-top:3px solid #b69a68;">
+          <p style="margin:0;color:#f8f3e8;font-family:Georgia,'Times New Roman',serif;font-size:33px;line-height:42px;letter-spacing:9px;">ANRAF</p>
+          <p style="margin:7px 0 0;color:#c8b080;font-family:Arial,Helvetica,sans-serif;font-size:9px;line-height:16px;letter-spacing:5px;">STUDIO</p>
+        </td></tr>
+        <tr><td class="content" style="padding:34px 34px 25px;">
+          <p style="margin:0 0 11px;color:#8b7146;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:16px;letter-spacing:2px;">THE ORDER DESK</p>
+          <h1 class="heading" style="margin:0;color:#292720;font-family:Georgia,'Times New Roman',serif;font-size:34px;line-height:42px;font-weight:400;">New order received.</h1>
+          <p style="margin:13px 0 0;color:#716b60;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:23px;">A customer has placed an order with ANRAF Studio. Their selection and delivery details are ready for your review.</p>
+        </td></tr>
+        <tr><td class="content" style="padding:0 34px 28px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0eae0;border-left:3px solid #b69a68;">
+            <tr><td style="padding:17px 18px;">
+              <p style="margin:0 0 6px;color:#8b7146;font-family:Arial,Helvetica,sans-serif;font-size:9px;line-height:16px;letter-spacing:2px;">ORDER REFERENCE</p>
+              <p style="margin:0;color:#292720;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;word-break:break-all;">{{order_reference}}</p>
+              <p style="margin:5px 0 0;color:#716b60;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:19px;">{{order_date}}</p>
+            </td></tr>
+          </table>
+        </td></tr>
+        <tr><td class="content" style="padding:0 34px 28px;">
+          <h2 style="margin:0 0 16px;color:#292720;font-family:Georgia,'Times New Roman',serif;font-size:23px;line-height:30px;font-weight:400;">Customer details</h2>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:22px;">
+            <tr><td width="85" valign="top" style="padding:7px 12px 7px 0;color:#8a8376;">Name</td><td style="padding:7px 0;color:#292720;">{{customer_name}}</td></tr>
+            <tr><td valign="top" style="padding:7px 12px 7px 0;color:#8a8376;">Phone</td><td style="padding:7px 0;color:#292720;">{{customer_phone}}</td></tr>
+            <tr><td valign="top" style="padding:7px 12px 7px 0;color:#8a8376;">Deliver to</td><td style="padding:7px 0;color:#292720;overflow-wrap:anywhere;">{{delivery_address}}</td></tr>
+            <tr><td valign="top" style="padding:7px 12px 7px 0;color:#8a8376;">Payment</td><td style="padding:7px 0;color:#292720;">Cash on delivery<br><span style="color:#8a8376;font-size:11px;">Payment not collected</span></td></tr>
+          </table>
+        </td></tr>
+        <tr><td class="content" style="padding:0 34px 28px;">
+          <h2 style="margin:0 0 16px;color:#292720;font-family:Georgia,'Times New Roman',serif;font-size:23px;line-height:30px;font-weight:400;">Order summary</h2>
+          <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:21px;">
+            <thead><tr>
+              <th scope="col" align="left" style="padding:11px 0;border-top:1px solid #dcd4c5;border-bottom:1px solid #dcd4c5;color:#8b7146;font-size:10px;letter-spacing:1px;font-weight:400;">ITEM</th>
+              <th scope="col" align="right" style="padding:11px 0;border-top:1px solid #dcd4c5;border-bottom:1px solid #dcd4c5;color:#8b7146;font-size:10px;letter-spacing:1px;font-weight:400;">AMOUNT</th>
+            </tr></thead>
+            <tbody>
+              <!-- Repeat this row for each purchased item. -->
+              <tr>
+                <td valign="top" style="padding:17px 12px 17px 0;border-bottom:1px solid #e8e1d6;">
+                  <span style="color:#292720;font-family:Georgia,'Times New Roman',serif;font-size:18px;line-height:25px;">{{product_name}}</span><br>
+                  <span style="color:#8a8376;font-size:11px;">Size: {{size}} &nbsp;·&nbsp; Qty: {{quantity}}</span>
+                </td>
+                <td align="right" valign="top" style="padding:17px 0;border-bottom:1px solid #e8e1d6;color:#292720;">PKR {{line_total}}</td>
+              </tr>
+            </tbody>
+          </table>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:21px;">
+            <tr><td style="padding:17px 0 5px;color:#8a8376;">Subtotal</td><td align="right" style="padding:17px 0 5px;color:#292720;">PKR {{subtotal}}</td></tr>
+            <tr><td style="padding:5px 0 17px;color:#8a8376;">Delivery</td><td align="right" style="padding:5px 0 17px;color:#292720;">{{delivery_charge}}</td></tr>
+            <tr>
+              <td style="padding:18px 14px;background:#27231d;color:#f8f3e8;font-family:Georgia,'Times New Roman',serif;font-size:19px;line-height:27px;">Order total</td>
+              <td align="right" style="padding:18px 14px;background:#27231d;color:#e1c998;font-family:Georgia,'Times New Roman',serif;font-size:21px;line-height:27px;">PKR {{order_total}}</td>
+            </tr>
+          </table>
+        </td></tr>
+        <!-- Omit this entire row when the customer has not left a note. -->
+        <tr><td class="content" style="padding:0 34px 28px;">
+          <p style="margin:0 0 8px;color:#8b7146;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:16px;letter-spacing:2px;">CUSTOMER NOTE</p>
+          <p style="margin:0;color:#716b60;font-family:Georgia,'Times New Roman',serif;font-size:16px;line-height:25px;font-style:italic;">{{customer_notes}}</p>
+        </td></tr>
+        <tr><td class="content" style="padding:23px 34px;background:#f3efe7;border-top:1px solid #e1d9cb;">
+          <p style="margin:0 0 7px;color:#8b7146;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:16px;letter-spacing:2px;">NEXT STEP</p>
+          <p style="margin:0;color:#716b60;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:21px;">Confirm availability and contact the customer before dispatch. This notification records an order request, not a payment receipt.</p>
+        </td></tr>
+        <tr><td align="center" style="padding:24px 20px;">
+          <p style="margin:0;color:#8b7146;font-family:Georgia,'Times New Roman',serif;font-size:14px;line-height:22px;letter-spacing:3px;">ANRAF STUDIO</p>
+          <p style="margin:7px 0 0;color:#8a8376;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:18px;">Private notification for the store team.<br>Customer details are confidential.</p>
+        </td></tr>
+      </table>
+      <!--[if mso]></td></tr></table><![endif]-->
+    </td></tr>
+  </table>
+</body>
+</html>

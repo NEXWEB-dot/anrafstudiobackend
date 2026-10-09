@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <title>Order Confirmation — ANRAF Studio</title>
+  <style type="text/css">
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
+    table { border-collapse: collapse !important; }
+    body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #f7f6f3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    
+    @media screen and (max-width: 600px) {
+      .email-container { width: 100% !important; max-width: 100% !important; }
+      .mobile-pad { padding-left: 20px !important; padding-right: 20px !important; }
+      .mobile-col { display: block !important; width: 100% !important; box-sizing: border-box !important; }
+      .mobile-pt-15 { padding-top: 15px !important; }
+      .mobile-title { font-size: 26px !important; line-height: 34px !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f7f6f3; color: #1a1a1a;">
+
+  <!-- Preheader Preview Text -->
+  <div style="display: none; font-size: 1px; color: #f7f6f3; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all;">
+    Thank you for your order, {{customer_name}}. Your ANRAF Studio order #{{order_ref}} has been received.
+  </div>
+
+  <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f7f6f3;">
+    <tr>
+      <td align="center" style="padding: 30px 10px;">
+        
+        <!-- Main Container (600px) -->
+        <table role="presentation" class="email-container" width="600" border="0" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border: 1px solid #e8e5de; box-shadow: 0 4px 18px rgba(0,0,0,0.04);">
+          
+          <!-- Header / Brand Banner -->
+          <tr>
+            <td align="center" style="padding: 38px 24px 28px; background-color: #111111; border-bottom: 2px solid #bfa15f;">
+              <a href="https://anraaf.com" target="_blank" style="text-decoration: none;">
+                <p style="margin: 0; font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-size: 32px; font-weight: 300; letter-spacing: 0.28em; color: #ffffff; text-transform: uppercase;">ANRAF</p>
+                <p style="margin: 4px 0 0; font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; font-size: 9px; font-weight: 400; letter-spacing: 0.35em; color: #bfa15f; text-transform: uppercase;">STUDIO · HAUTE COUTURE</p>
+              </a>
+            </td>
+          </tr>
+
+          <!-- Thank You Message -->
+          <tr>
+            <td class="mobile-pad" style="padding: 38px 36px 20px; text-align: center;">
+              <span style="font-size: 10px; font-weight: 600; letter-spacing: 0.24em; color: #bfa15f; text-transform: uppercase; display: block; margin-bottom: 12px;">ORDER CONFIRMATION</span>
+              <h1 class="mobile-title" style="margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 32px; font-weight: 400; color: #111111; line-height: 1.25;">
+                Thank you for your order, {{customer_name}}.
+              </h1>
+              <p style="margin: 14px 0 0; font-size: 14px; line-height: 1.6; color: #555555; max-width: 480px; margin-left: auto; margin-right: auto;">
+                We have received your selection with great pleasure. Our artisans and dispatch team are now preparing your order with the utmost care and precision.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Order Reference Badge -->
+          <tr>
+            <td class="mobile-pad" style="padding: 10px 36px 28px;">
+              <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #faf9f6; border: 1px solid #e8e4db; border-radius: 4px;">
+                <tr>
+                  <td style="padding: 16px 20px;">
+                    <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td valign="middle">
+                          <span style="font-size: 10px; font-weight: 600; letter-spacing: 0.15em; color: #888888; text-transform: uppercase; display: block;">ORDER NUMBER</span>
+                          <span style="font-size: 16px; font-weight: 700; color: #111111; font-family: monospace; letter-spacing: 0.08em;">#{{order_ref}}</span>
+                        </td>
+                        <td align="right" valign="middle">
+                          <span style="font-size: 10px; font-weight: 600; letter-spacing: 0.15em; color: #888888; text-transform: uppercase; display: block;">ORDER DATE</span>
+                          <span style="font-size: 13px; color: #444444;">{{order_date}}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Items Ordered Table -->
+          <tr>
+            <td class="mobile-pad" style="padding: 0 36px 30px;">
+              <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+                <thead>
+                  <tr>
+                    <th align="left" style="padding-bottom: 12px; font-size: 10px; font-weight: 600; letter-spacing: 0.18em; color: #888888; text-transform: uppercase; border-bottom: 1px solid #111111;">PRODUCT</th>
+                    <th align="center" style="padding-bottom: 12px; font-size: 10px; font-weight: 600; letter-spacing: 0.18em; color: #888888; text-transform: uppercase; border-bottom: 1px solid #111111;">SIZE</th>
+                    <th align="center" style="padding-bottom: 12px; font-size: 10px; font-weight: 600; letter-spacing: 0.18em; color: #888888; text-transform: uppercase; border-bottom: 1px solid #111111;">QTY</th>
+                    <th align="right" style="padding-bottom: 12px; font-size: 10px; font-weight: 600; letter-spacing: 0.18em; color: #888888; text-transform: uppercase; border-bottom: 1px solid #111111;">PRICE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  
+                  <!-- Sample Item Row (Repeat on server for each product) -->
+                  {{#each items}}
+                  <tr>
+                    <td style="padding: 16px 0; border-bottom: 1px solid #ece8e1;">
+                      <strong style="font-size: 14px; color: #111111; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 16px; display: block;">{{name}}</strong>
+                      <span style="font-size: 11px; color: #777777;">Artisanal Collection</span>
+                    </td>
+                    <td align="center" style="padding: 16px 8px; border-bottom: 1px solid #ece8e1; font-size: 13px; color: #333333;">
+                      {{size}}
+                    </td>
+                    <td align="center" style="padding: 16px 8px; border-bottom: 1px solid #ece8e1; font-size: 13px; color: #333333;">
+                      {{qty}}
+                    </td>
+                    <td align="right" style="padding: 16px 0; border-bottom: 1px solid #ece8e1; font-size: 14px; font-weight: 500; color: #111111;">
+                      Rs. {{price}} PKR
+                    </td>
+                  </tr>
+                  {{/each}}
+
+                </tbody>
+              </table>
+
+              <!-- Totals Breakdown -->
+              <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-top: 10px;">
+                <tr>
+                  <td align="right" style="padding: 8px 0; font-size: 13px; color: #666666;">Subtotal</td>
+                  <td align="right" width="120" style="padding: 8px 0; font-size: 13px; color: #111111;">Rs. {{subtotal}} PKR</td>
+                </tr>
+                <tr>
+                  <td align="right" style="padding: 4px 0 12px; font-size: 13px; color: #666666;">Nationwide Express Delivery</td>
+                  <td align="right" width="120" style="padding: 4px 0 12px; font-size: 12px; font-weight: 700; color: #25d366; letter-spacing: 0.05em;">COMPLIMENTARY</td>
+                </tr>
+                <tr>
+                  <td align="right" style="padding: 14px 0; border-top: 2px solid #111111; font-size: 14px; font-weight: 700; color: #111111; text-transform: uppercase; letter-spacing: 0.08em;">Total Payable</td>
+                  <td align="right" width="140" style="padding: 14px 0; border-top: 2px solid #111111; font-size: 18px; font-weight: 700; color: #111111;">Rs. {{total_amount}} PKR</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Delivery & Payment Summary Box -->
+          <tr>
+            <td class="mobile-pad" style="padding: 0 36px 30px;">
+              <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #faf9f6; border: 1px solid #e8e4db; border-radius: 4px;">
+                <tr>
+                  <td style="padding: 22px;">
+                    <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <!-- Delivery Address Column -->
+                        <td class="mobile-col" width="50%" valign="top" style="padding-right: 12px;">
+                          <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.16em; color: #bfa15f; text-transform: uppercase; display: block; margin-bottom: 8px;">DELIVERY ADDRESS</span>
+                          <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #222222; font-weight: 600;">{{customer_name}}</p>
+                          <p style="margin: 4px 0 0; font-size: 13px; line-height: 1.55; color: #555555;">{{delivery_address}}</p>
+                          <p style="margin: 6px 0 0; font-size: 12px; color: #777777;">Phone: <strong style="color: #222;">{{customer_phone}}</strong></p>
+                        </td>
+                        
+                        <!-- Payment Method Column -->
+                        <td class="mobile-col mobile-pt-15" width="50%" valign="top" style="padding-left: 12px; border-left: 1px solid #e8e4db;">
+                          <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.16em; color: #bfa15f; text-transform: uppercase; display: block; margin-bottom: 8px;">PAYMENT METHOD</span>
+                          <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #111111; font-weight: 600;">{{payment_method_title}}</p>
+                          <p style="margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: #666666;">{{payment_instructions}}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Bank Transfer Notice (Shown when Direct Bank Transfer / WhatsApp chosen) -->
+          {{#if is_bank_transfer}}
+          <tr>
+            <td class="mobile-pad" style="padding: 0 36px 30px;">
+              <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f3f9f4; border: 1px solid #c7e3cb; border-radius: 4px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.15em; color: #1b5e20; text-transform: uppercase; display: block; margin-bottom: 10px;">
+                      ✦ BANK TRANSFER / RAAST DETAILS
+                    </span>
+                    <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 12px; color: #222222; line-height: 1.6;">
+                      <tr>
+                        <td width="120" style="color: #666666; padding: 3px 0;">Bank Name:</td>
+                        <td style="font-weight: 600; padding: 3px 0;">Meezan Bank Limited</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #666666; padding: 3px 0;">Account Title:</td>
+                        <td style="font-weight: 600; padding: 3px 0;">ANRAF STUDIO</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #666666; padding: 3px 0;">Account Number:</td>
+                        <td style="font-weight: 700; font-family: monospace; font-size: 13px; padding: 3px 0;">02010108554321</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #666666; padding: 3px 0;">IBAN:</td>
+                        <td style="font-weight: 700; font-family: monospace; font-size: 12px; padding: 3px 0;">PK45MEZN0002010108554321</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #666666; padding: 3px 0;">Raast ID:</td>
+                        <td style="font-weight: 700; font-family: monospace; font-size: 13px; padding: 3px 0;">03336230844</td>
+                      </tr>
+                    </table>
+                    <p style="margin: 12px 0 0; font-size: 12px; line-height: 1.5; color: #2e7d32;">
+                      Please share your payment transaction receipt screenshot on our WhatsApp concierge below to fast-track immediate dispatch.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {{/if}}
+
+          <!-- WhatsApp Concierge CTA Button -->
+          <tr>
+            <td class="mobile-pad" align="center" style="padding: 0 36px 36px;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="border-radius: 3px; background-color: #25d366;">
+                    <a href="https://wa.me/923000000000?text=Salam%20ANRAF%20Studio%2C%20regarding%20my%20order%20%23{{order_ref}}" target="_blank" style="font-size: 13px; font-weight: 600; letter-spacing: 0.1em; color: #ffffff; text-decoration: none; padding: 14px 28px; display: inline-block; text-transform: uppercase;">
+                      Chat with us on WhatsApp →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <span style="font-size: 11px; color: #888888; display: block; margin-top: 10px;">
+                Instant order tracking and delivery queries via WhatsApp
+              </span>
+            </td>
+          </tr>
+
+          <!-- Delivery Note Banner -->
+          <tr>
+            <td class="mobile-pad" style="padding: 22px 36px; background-color: #faf9f6; border-top: 1px solid #ece8e1;">
+              <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="font-size: 12px; line-height: 1.55; color: #666666; text-align: center;">
+                    <strong style="color: #111111;">Estimated Delivery:</strong> 3–5 working days nationwide across Pakistan.<br>
+                    Our courier partner will contact you prior to delivery.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding: 30px 24px; background-color: #111111; color: #888888;">
+              <p style="margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 18px; letter-spacing: 0.2em; color: #ffffff;">ANRAF STUDIO</p>
+              <p style="margin: 6px 0 0; font-size: 11px; color: #999999; line-height: 1.6;">
+                Handcrafted luxury prêt, bespoke formals, and Swiss lawn.<br>
+                Karachi · Lahore · Islamabad · Nationwide Delivery
+              </p>
+              <p style="margin: 14px 0 0; font-size: 10px; color: #666666;">
+                © 2026 ANRAF Studio. All rights reserved.<br>
+                <a href="https://anraaf.com" target="_blank" style="color: #bfa15f; text-decoration: none;">www.anraaf.com</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+        <!-- /Main Container -->
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

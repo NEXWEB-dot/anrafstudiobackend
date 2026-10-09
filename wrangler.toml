@@ -8,7 +8,7 @@ SITE_ORIGIN         = "https://anraaf.com"
 SANITY_PROJECT_ID   = "m7hktaor"
 SANITY_DATASET      = "production"
 TURNSTILE_SITE_KEY  = "0x4AAAAAAFRsQ5VSe_CG8TtY"
-MAIL_FROM           = "orders@anraafstudio.com"   # Note: use onboarding@resend.dev until custom domain is verified
+MAIL_FROM           = "orders@anraaf.com"
 ADMIN_NOTIFY_EMAIL  = "faisalshayan444@gmail.com"
 CHECKOUT_ENABLED    = "true"
 

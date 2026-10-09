@@ -118,7 +118,7 @@ export async function onRequestPost({request, env}) {
     ? `[BANK / WHATSAPP] ANRAF Order #${b.client_ref.slice(0,8).toUpperCase()} — PKR ${total.toLocaleString('en-PK')}`
     : `[COD] ANRAF Order #${b.client_ref.slice(0,8).toUpperCase()} — PKR ${total.toLocaleString('en-PK')}`;
 
-  const primarySender = env.MAIL_FROM || 'orders@anraafstudio.com';
+  const primarySender = env.MAIL_FROM || 'orders@anraaf.com';
 
   try {
     let emailRes = await fetch('https://api.resend.com/emails', {
