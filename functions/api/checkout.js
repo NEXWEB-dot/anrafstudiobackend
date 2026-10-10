@@ -288,13 +288,22 @@ export async function onRequestPost({request, env}) {
     ? `[BANK / WHATSAPP] ANRAF Order #${shortRef} — PKR ${total.toLocaleString('en-PK')}`
     : `[COD] ANRAF Order #${shortRef} — PKR ${total.toLocaleString('en-PK')}`;
 
-  const primarySender = env.MAIL_FROM || 'orders@anraaf.com';
+  const rawSender = env.MAIL_FROM || 'orders@anraaf.com';
+  const primarySender = rawSender.includes('<') ? rawSender : `ANRAF Studio <${rawSender}>`;
+  const replyTo = env.ADMIN_NOTIFY_EMAIL || 'info@anraafstudio.com';
+
+  // In case the domain verified in Resend is send.anraaf.com (standard Resend setup)
+  const emailDomain = (rawSender.match(/@([^\s>]+)/) || [])[1] || 'anraaf.com';
+  const subSender = emailDomain.startsWith('send.') ? primarySender : `ANRAF Studio <orders@send.${emailDomain}>`;
 
   let emailRes = null;
   let emailData = null;
+  let activeSender = primarySender;
+  let customerEmailRes = null;
+  let customerEmailData = null;
 
   try {
-    // 1. Send Order Dispatch Notification to Store Admin
+    // 1. Send Order Dispatch Notification to Store Admin (try primarySender)
     emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       signal: AbortSignal.timeout(10000),
@@ -306,13 +315,38 @@ export async function onRequestPost({request, env}) {
       body: JSON.stringify({
         from: primarySender,
         to: [env.ADMIN_NOTIFY_EMAIL],
+        reply_to: replyTo,
         subject,
         html: adminHtml,
       }),
     });
 
-    // If primary sender failed, fall back to onboarding@resend.dev
-    if (!emailRes.ok && primarySender !== 'onboarding@resend.dev') {
+    // If primary failed and we have subSender, try subSender (orders@send.anraaf.com)
+    if (!emailRes.ok && subSender !== primarySender) {
+      const subRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        signal: AbortSignal.timeout(8000),
+        headers: {
+          Authorization: `Bearer ${env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+          'Idempotency-Key': `order-sub/${b.client_ref}`,
+        },
+        body: JSON.stringify({
+          from: subSender,
+          to: [env.ADMIN_NOTIFY_EMAIL],
+          reply_to: replyTo,
+          subject,
+          html: adminHtml,
+        }),
+      });
+      if (subRes.ok) {
+        emailRes = subRes;
+        activeSender = subSender;
+      }
+    }
+
+    // If still failed, fall back to onboarding@resend.dev for store admin alert
+    if (!emailRes.ok && !primarySender.includes('onboarding@resend.dev')) {
       emailRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         signal: AbortSignal.timeout(8000),
@@ -322,8 +356,9 @@ export async function onRequestPost({request, env}) {
           'Idempotency-Key': `order-fallback/${b.client_ref}`,
         },
         body: JSON.stringify({
-          from: 'onboarding@resend.dev',
+          from: 'ANRAF Studio <onboarding@resend.dev>',
           to: [env.ADMIN_NOTIFY_EMAIL],
+          reply_to: replyTo,
           subject: `${subject} (via onboarding@resend.dev)`,
           html: adminHtml,
         }),
@@ -334,7 +369,12 @@ export async function onRequestPost({request, env}) {
 
     // 2. Send Luxury Order Confirmation directly to Customer (if email provided)
     if (b.email && emailRes.ok) {
-      await fetch('https://api.resend.com/emails', {
+      // Determine best sender for customer (prefer working verified sender over onboarding@resend.dev)
+      const custSender = (activeSender && !activeSender.includes('onboarding@resend.dev'))
+        ? activeSender
+        : subSender;
+
+      customerEmailRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         signal: AbortSignal.timeout(8000),
         headers: {
@@ -343,12 +383,38 @@ export async function onRequestPost({request, env}) {
           'Idempotency-Key': `customer-receipt/${b.client_ref}`,
         },
         body: JSON.stringify({
-          from: primarySender,
+          from: custSender,
           to: [b.email.trim()],
+          reply_to: replyTo,
           subject: `Your ANRAF Studio Order Confirmation #${shortRef}`,
           html: customerHtml,
         }),
-      }).catch(err => console.warn('Customer receipt send error:', err));
+      });
+      customerEmailData = await customerEmailRes.json().catch(() => null);
+
+      // If custSender failed and was subSender, try primarySender; or vice-versa
+      if (!customerEmailRes.ok) {
+        const altSender = custSender === subSender ? primarySender : subSender;
+        if (altSender !== custSender) {
+          customerEmailRes = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            signal: AbortSignal.timeout(8000),
+            headers: {
+              Authorization: `Bearer ${env.RESEND_API_KEY}`,
+              'Content-Type': 'application/json',
+              'Idempotency-Key': `customer-receipt-retry/${b.client_ref}`,
+            },
+            body: JSON.stringify({
+              from: altSender,
+              to: [b.email.trim()],
+              reply_to: replyTo,
+              subject: `Your ANRAF Studio Order Confirmation #${shortRef}`,
+              html: customerHtml,
+            }),
+          });
+          customerEmailData = await customerEmailRes.json().catch(() => null);
+        }
+      }
     }
   } catch (err) {
     console.warn('Resend fetch exception:', err);
@@ -367,6 +433,9 @@ export async function onRequestPost({request, env}) {
       ok: emailRes?.ok,
       status: emailRes?.status,
       data: emailData,
+      customer_ok: customerEmailRes?.ok,
+      customer_status: customerEmailRes?.status,
+      customer_data: customerEmailData,
     }
   });
 }
