@@ -9,7 +9,7 @@ SANITY_PROJECT_ID   = "m7hktaor"
 SANITY_DATASET      = "production"
 TURNSTILE_SITE_KEY  = "0x4AAAAAAFRsQ5VSe_CG8TtY"
 MAIL_FROM           = "orders@anraaf.com"
-ADMIN_NOTIFY_EMAIL  = "faisalshayan444@gmail.com"
+ADMIN_NOTIFY_EMAIL  = "Anrafstudio@gmail.com"
 CHECKOUT_ENABLED    = "true"
 DELIVERY_FEE        = "260"
 
