@@ -1,6 +1,9 @@
 // Exact-origin CORS for a static storefront. No credentials or wildcard origins.
 export async function onRequest({request, env, next}) {
   const path = new URL(request.url).pathname;
+  // Admin routes apply their own authentication and exact-origin CORS.
+  // The existing storefront routes below retain their original behavior.
+  if (path.startsWith('/api/admin/') || path === '/api/webhooks/resend') return next();
   if (!['/api/config', '/api/catalog', '/api/checkout'].includes(path))
     return Response.json({error: 'NOT_FOUND'}, {status: 404, headers: {'Cache-Control': 'no-store'}});
   const origin = request.headers.get('Origin');

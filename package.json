@@ -13,5 +13,10 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "dependencies": {
+    "jose": "^6.2.12",
+    "linkedom": "^0.18.13",
+    "svix": "^1.99.1"
   }
 }

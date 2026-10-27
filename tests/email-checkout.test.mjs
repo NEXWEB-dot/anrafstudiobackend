@@ -2,6 +2,7 @@ import {test, afterEach} from 'node:test';
 import assert from 'node:assert/strict';
 import {onRequestPost} from '../functions/api/checkout.js';
 import {onRequest} from '../functions/_middleware.js';
+import {onRequest as adminRequest} from '../functions/api/admin/[[path]].js';
 const savedFetch = globalThis.fetch;
 afterEach(() => {globalThis.fetch = savedFetch;});
 const ref = '22222222-2222-4222-8222-222222222222';
@@ -60,12 +61,14 @@ test('checkout fails closed for unavailable Sanity, invalid bot verification, so
   globalThis.fetch=(url,options)=>String(url).includes('sanity.io') ? Promise.reject(new Error('offline')) : upstream(url,options);
   assert.equal((await call()).status,503);
 });
-test('CORS allows only configured storefront and does not expose legacy admin routes',async()=>{
+test('CORS allows only configured storefront and admin routes require authentication',async()=>{
   const next=async()=>Response.json({ok:true});
   for (const [origin,status] of [['https://shop.test',204],['https://evil.test',403]]) {
     const r=await onRequest({env,next,request:new Request('https://api.test/api/checkout',{method:'OPTIONS',headers:{Origin:origin}})});
     assert.equal(r.status,status); assert.equal(r.headers.get('Access-Control-Allow-Origin'),status===204?origin:null);
   }
-  const r=await onRequest({env,next,request:new Request('https://api.test/api/admin/orders')});
-  assert.equal(r.status,404);
+  const adminEnv={...env,DB:{},ADMIN_PASSWORD:'a'.repeat(24),ADMIN_SESSION_SECRET:'b'.repeat(40)};
+  const adminReq=new Request('https://api.test/api/admin/orders');
+  const r=await onRequest({env:adminEnv,next:()=>adminRequest({env:adminEnv,request:adminReq}),request:adminReq});
+  assert.equal(r.status,401);
 });

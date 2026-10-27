@@ -1,8 +1,9 @@
-name = "anraf-studio"
+name = "anrafstudiobackend"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-01-01"
+compatibility_flags = ["nodejs_compat"]
 
-# ── Public vars (safe to commit) ─────────────────────────────────────────────
+# ── Public vars (safe to commit) ──────────────────────────────────────────
 [vars]
 SITE_ORIGIN         = "https://anraaf.com"
 SANITY_PROJECT_ID   = "m7hktaor"
@@ -11,8 +12,16 @@ TURNSTILE_SITE_KEY  = "0x4AAAAAAFRsQ5VSe_CG8TtY"
 MAIL_FROM           = "orders@anraaf.com"
 ADMIN_NOTIFY_EMAIL  = "Anrafstudio@gmail.com"
 CHECKOUT_ENABLED    = "true"
+ADMIN_ORIGIN        = "https://nexweb-dot.github.io"
+CLOUDFLARE_ZONE_ID  = "764b8946cc4c19337b6facae2e70c2ae"
 DELIVERY_FEE        = "260"
 
 # ── Secrets (set via: npx wrangler pages secret put <NAME>) ──────────────────
 # RESEND_API_KEY    → resend.com/api-keys
 # TURNSTILE_SECRET  → Cloudflare Dashboard → Turnstile → your widget → Secret key
+
+[[d1_databases]]
+binding = "DB"
+database_name = "anraf-admin"
+database_id = "af6d52ff-0b99-4034-8a4f-8486d3f90581"
+migrations_dir = "admin-migrations"

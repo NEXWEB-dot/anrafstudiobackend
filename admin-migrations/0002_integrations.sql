@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS integrations (
+  name TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);

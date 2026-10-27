@@ -1,5 +1,20 @@
 # ANRAF Sanity + Resend API
 
+## Admin dashboard integration
+
+The GitHub Pages dashboard calls protected `/api/admin/*` endpoints in this backend.
+`admin/` and `admin-migrations/` are synchronized from the admindashboard repository.
+The private `DB` binding stores captured order emails, statuses and audit history.
+Configure `ADMIN_ORIGIN`, encrypted `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET`.
+Use a separate `RESEND_ADMIN_API_KEY` for email retrieval and webhook setup, leaving
+the checkout key unchanged. An authenticated `POST /api/admin/setup-resend` sets up
+the `email.sent` webhook at `/api/webhooks/resend` without sending any email.
+Analytics needs `CLOUDFLARE_ZONE_ID` and a restricted `CLOUDFLARE_ANALYTICS_TOKEN`.
+See the dashboard repository README for full configuration and data limitations.
+
+The checkout implementation below remains email-only. The new private admin
+database captures successful notifications separately; it does not alter checkout.
+
 Products are read from Sanity's public API CDN and order requests are sent through
 Resend. No Supabase, R2, legacy admin API, or cron worker is required.
 
