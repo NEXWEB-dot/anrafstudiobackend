@@ -6,8 +6,16 @@ export async function onRequest({request, env, next}) {
   if (path.startsWith('/api/admin/') || path === '/api/webhooks/resend') return next();
   if (!['/api/config', '/api/catalog', '/api/checkout'].includes(path))
     return Response.json({error: 'NOT_FOUND'}, {status: 404, headers: {'Cache-Control': 'no-store'}});
+
   const origin = request.headers.get('Origin');
-  const allowed = !!env.SITE_ORIGIN && origin === env.SITE_ORIGIN;
+  const allowedOrigins = [
+    env.SITE_ORIGIN,
+    'https://anraaf.com',
+    'https://www.anraaf.com',
+    'https://nexweb-dot.github.io'
+  ].filter(Boolean);
+  const allowed = !origin || allowedOrigins.includes(origin) || origin.endsWith('.pages.dev');
+
   let response;
   if (request.method === 'OPTIONS') {
     response = new Response(null, {status: allowed ? 204 : 403});
@@ -18,7 +26,7 @@ export async function onRequest({request, env, next}) {
     catch { response = Response.json({error: 'SERVICE_UNAVAILABLE'}, {status: 503}); }
   }
   const out = new Response(response.body, response);
-  if (allowed) {
+  if (allowed && origin) {
     out.headers.set('Access-Control-Allow-Origin', origin);
     out.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     out.headers.set('Access-Control-Allow-Headers', 'Content-Type, If-None-Match');

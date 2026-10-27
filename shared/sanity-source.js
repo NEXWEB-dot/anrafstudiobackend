@@ -41,9 +41,11 @@ export function normalizeSanity(result, env) {
     const price = Math.round(Math.round(p.price * 100) * (100 - discount) / 100) / 100;
     if (price < 1) throw new Error('Invalid discounted price');
     const sizes = p.sizes ?? ['Small', 'Medium', 'Large', 'XL'];
-    if (!Array.isArray(sizes) || sizes.some(s => !['Small', 'Medium', 'Large', 'XL'].includes(s))) throw new Error('Invalid sizes');
+    const validSizes = ['Small', 'Medium', 'Large', 'XL', 'S', 'M', 'L'];
+    if (!Array.isArray(sizes) || sizes.some(s => !validSizes.includes(s))) throw new Error('Invalid sizes');
     const filters = p.filters?.length ? p.filters : (p.category ? [p.category] : []);
-    if (!Array.isArray(filters) || filters.some(f => !['Embroidered', 'Lawn', 'Heritage', 'Ready to Wear'].includes(f))) throw new Error('Invalid filters');
+    const validFilters = ['Embroidered', 'Lawn', 'Heritage', 'Heritage Edit', 'Ready to Wear', 'Summer', 'Summer Collection', 'Fall', 'Sale'];
+    if (!Array.isArray(filters) || filters.some(f => !validFilters.includes(f))) throw new Error('Invalid filters');
     return {...p, price, compare_at_price: discount > 0 ? p.price : p.compare_at_price,
       discount_percent: discount, sizes: [...new Set(sizes)], filters: [...new Set(filters)],
       description: typeof p.description === 'string' ? p.description : '',
