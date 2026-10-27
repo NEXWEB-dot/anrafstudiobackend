@@ -64,10 +64,11 @@ export async function onRequestPost({request, env}) {
   catch { return json({error:'CATALOG_UNAVAILABLE'}, 503); }
 
   const products = new Map(catalog.products.map(p => [p.id, p]));
+  const bySlug = new Map(catalog.products.map(p => [p.slug, p]));
   const lines = [];
   let cents = 0;
   for (const item of b.items) {
-    const p = products.get(item.product_id);
+    const p = products.get(item.product_id) || bySlug.get(item.product_id);
     if (!p) return json({error:'PRODUCT_UNAVAILABLE'}, 409);
     if (!p.in_stock) return json({error:'OUT_OF_STOCK'}, 409);
     if (!p.sizes.includes(item.size)) return json({error:'SIZE_UNAVAILABLE'}, 409);
