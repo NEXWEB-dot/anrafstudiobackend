@@ -36,7 +36,8 @@ export async function onRequestPost({request, env}) {
   if (typeof b.client_ref !== 'string' || !UUID.test(b.client_ref) ||
       typeof b.name !== 'string' || !b.name.trim() || b.name.length > 100 ||
       (b.email != null && (typeof b.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email) || b.email.length > 150)) ||
-      typeof b.phone !== 'string' || !/^\+923\d{9}$/.test(b.phone) ||
+      typeof b.phone !== 'string' || !/^\+[1-9]\d{7,14}$/.test(b.phone) ||
+      (b.phone.startsWith('+92') && !/^\+923\d{9}$/.test(b.phone)) ||
       typeof b.address !== 'string' || !b.address.trim() || b.address.length > 500 ||
       (b.notes != null && (typeof b.notes !== 'string' || b.notes.length > 500)) ||
       !Array.isArray(b.items) || !b.items.length || b.items.length > 30 ||
